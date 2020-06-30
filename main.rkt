@@ -1,7 +1,6 @@
 #lang racket/base
 
-(struct cmd-flag [dir port]
-  #:transparent)
+(require "./aipom/flag.rkt")
 
 (define (start-server flag)
   (displayln flag))
@@ -9,12 +8,11 @@
 (module+ main
   (require racket/cmdline)
 
-  (let ([dir (make-parameter (current-directory))]
-        [port (make-parameter 8000)])
-    (command-line
-     #:program "Aipom"
-     #:once-each
-     [("-p" "--port") port_ "开放端口" (port port_)]
-     [("-d" "--dir") dir_ "静态服务文件目录" (dir dir_)]
-     #:args()
-     (start-server (cmd-flag (dir) (port))))))
+  (define 命令标识 (生成默认标识))
+  (command-line
+   #:program "Aipom"
+   #:once-each
+   [("-p" "--port") 端口 "开放端口" (set-命令标识体-端口! 命令标识 端口)]
+   [("-d" "--dir") 目录 "静态服务文件目录" (set-命令标识体-目录! 命令标识 目录)]
+   #:args()
+   (start-server 命令标识)))
