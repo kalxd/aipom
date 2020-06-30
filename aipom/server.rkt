@@ -9,6 +9,8 @@
 
          "./flag.rkt")
 
+(provide 启动服务)
+
 (define RESPONSE-TYPE
   #"text/plain; charset=utf-8")
 
