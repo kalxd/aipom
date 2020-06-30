@@ -14,6 +14,14 @@
 (define RESPONSE-TYPE
   #"text/plain; charset=utf-8")
 
+;;; 检测文件是否存在，
+;;; 不存在则尝试读取index.html。
+(define (检测文件 文件)
+  (if (file-exists? 文件)
+      文件
+      (let ([索引文件 (build-path 文件 'up "index.html")])
+        (and (file-exists? 索引文件) 索引文件))))
+
 (define (拼接请求路径 目录 req)
   (let* ([url (request-uri req)]
          [path (string-split (url->string url) "/")])
@@ -37,11 +45,11 @@
                  empty))
 
 (define (请求处理 目录 req)
-  (define 请求文件 (拼接请求路径 目录 req))
-  (displayln 请求文件)
-  (if (file-exists? 请求文件)
-      (输出请求文件 请求文件)
-      输出未找到))
+  (let* ([请求文件 (拼接请求路径 目录 req)]
+         [文件 (检测文件 请求文件)])
+    (if (file-exists? 文件)
+        (输出请求文件 文件)
+        输出未找到)))
 
 (define (启动服务 标识)
   (let ([端口 (命令标识体-端口 标识)]
