@@ -35,6 +35,12 @@
          [path (string-split (url->string url) "/")])
     (apply build-path (cons 目录 path))))
 
+(define (正常请求日志 req)
+  (let ([method (request-method req)]
+        [url (url->string (request-uri req))])
+    (printf "~a ~a - 200\n" method url)
+    (flush-output)))
+
 (define (输出请求文件 文件)
   (let ([mine (匹配MINE (path-get-extension 文件))]
         [body (file->bytes 文件)])
@@ -44,6 +50,12 @@
                    mine
                    empty
                    (list body))))
+
+(define (未找到日志 req)
+  (let ([method (request-method req)]
+        [url (url->string (request-uri req))])
+    (printf "~a ~a - 404\n" method url)
+    (flush-output)))
 
 (define 输出未找到
   (response/full 404
@@ -57,16 +69,19 @@
   (let* ([请求文件 (拼接请求路径 目录 req)]
          [文件 (检测文件 请求文件)])
     (if (file-exists? 文件)
-        (输出请求文件 文件)
-        输出未找到)))
+        (begin
+          (正常请求日志 req)
+          (输出请求文件 文件))
+        (begin
+          (未找到日志 req)
+          输出未找到))))
 
 (define (启动服务 标识)
-  (displayln 标识)
   (let ([端口 (命令标识体-端口 标识)]
         [目录 (命令标识体-目录 标识)])
     (serve/servlet (λ (req) (请求处理 目录 req))
                    #:port 端口
-                   #:command-line? #t
+                   ; #:command-line? #t
                    #:launch-browser? #f
                    #:servlet-regexp #rx"")))
 
