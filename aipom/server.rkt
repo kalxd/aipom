@@ -7,19 +7,20 @@
          racket/string
          racket/file
          racket/path
-         racket/match
 
          "./flag.rkt")
 
 (provide 启动服务)
 
+(define 扩展映射
+  (make-immutable-hash
+   '((#".html" . #"text/html")
+     (#".css" . #"text/css")
+     (#".js" . #"text/javascript"))))
+
 ;;; 匹配MIME类型。
 (define (匹配MINE 文件扩展)
-  (define t (match 文件扩展
-              [#".html" #"text/html"]
-              [#".css" #"text/css"]
-              [#".js" #"text/javascript"]
-              [else #"text/plain"]))
+  (define t (hash-ref 扩展映射 文件扩展 #"text/plain"))
   (bytes-append t #"; charset=utf-8"))
 
 ;;; 检测文件是否存在，
