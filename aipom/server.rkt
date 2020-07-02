@@ -31,8 +31,10 @@
         (and (file-exists? 索引文件) 索引文件))))
 
 (define (拼接请求路径 目录 req)
-  (let* ([url (request-uri req)]
-         [path (string-split (url->string url) "/")])
+  (let* ([uri (request-uri req)]
+         [path (url-path uri)]
+         [path (map path/param-path path)]
+         [path (filter non-empty-string? path)])
     (apply build-path (cons 目录 path))))
 
 (define (正常请求日志 req)
