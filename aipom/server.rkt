@@ -14,14 +14,35 @@
 
 (define 扩展映射
   (make-immutable-hash
-   '((#".html" . #"text/html")
+   '(; 前端三剑额
+     (#".html" . #"text/html")
      (#".css" . #"text/css")
-     (#".js" . #"text/javascript"))))
+     (#".js" . #"text/javascript")
+     ; 文字
+     (#".ttf" . #"font/ttf")
+     (#".otf" . #"font/otf")
+     (#".woff" . #"font/woff")
+     ; 图片
+     (#".apng" . #"image/apng")
+     (#".bmp" . #"image/bmp")
+     (#".gif" . #"image/gif")
+     (#".ico" . #"image/x-icon")
+     (#".cur" . #"image/x-icon")
+     (#".jpg" . #"image/jpeg")
+     (#".jpeg" . #"image/jpeg")
+     (#".jfif" . #"image/jpeg")
+     (#".pjpeg" . #"image/jpeg")
+     (#".pjp" . #"image/jpeg")
+     (#".png" . #"image/png")
+     (#".svg" . #"image/svg+xml")
+     (#".tif" . #"image/tiff")
+     (#".tiff" . #"image/tiff")
+     (#".webp" . #"image/webp"))))
 
 ;;; 匹配MIME类型。
 (define (匹配MINE 文件扩展)
-  (define t (hash-ref 扩展映射 文件扩展 #"text/plain"))
-  (bytes-append t #"; charset=utf-8"))
+  (let ([mine (hash-ref 扩展映射 文件扩展 #"text/plain")])
+    (bytes-append mine #"; charset=utf-8")))
 
 ;;; 检测文件是否存在，
 ;;; 不存在则尝试读取index.html。
@@ -51,7 +72,9 @@
                    #"OK"
                    (current-seconds)
                    mine
-                   empty
+                   (list (header #"Content-Length"
+                                 (string->bytes/utf-8
+                                  (number->string (bytes-length body)))))
                    (list body))))
 
 (define (未找到日志 req)
