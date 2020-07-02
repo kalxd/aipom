@@ -7,6 +7,14 @@ Aipom
 
 ```bash
 $ aipom -h
+Aipom [ <option> ... ]
+ where <option> is one of
+  -p <端口>, --port <端口> : 开放端口
+  -d <目录>, --dir <目录> : 静态服务文件目录
+  --help, -h : Show this help
+  -- : Do not treat any remaining argument as a switch (at this level)
+ Multiple single-letter switches can be combined after one `-'; for
+  example: `-h-' is the same as `-h --'
 ```
 
 # 用起来的样子 #
