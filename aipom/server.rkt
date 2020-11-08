@@ -14,7 +14,7 @@
 
 (define 扩展映射
   (make-immutable-hash
-   '(; 前端三剑额
+   '(; 前端三剑客
      (#".html" . #"text/html")
      (#".css" . #"text/css")
      (#".js" . #"text/javascript")
@@ -107,7 +107,6 @@
         [目录 (命令标识体-目录 标识)])
     (serve/servlet (λ (req) (请求处理 目录 req))
                    #:port 端口
-                   ; #:command-line? #t
                    #:launch-browser? #f
                    #:servlet-regexp #rx"")))
 
