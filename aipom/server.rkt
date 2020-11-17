@@ -72,9 +72,11 @@
 
 (define (启动服务 标识)
   (let ([端口 (命令标识体-端口 标识)]
-        [目录 (命令标识体-目录 标识)])
+        [目录 (命令标识体-目录 标识)]
+        [地址 (命令标识体-地址 标识)])
     (serve/servlet (λ (req) (请求处理 目录 req))
                    #:port 端口
+                   #:listen-ip 地址
                    #:launch-browser? #f
                    #:servlet-regexp #rx"")))
 
