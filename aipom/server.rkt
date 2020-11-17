@@ -33,13 +33,7 @@
          [path (filter non-empty-string? path)])
     (apply build-path (cons 目录 path))))
 
-(define (正常请求日志 req)
-  (let ([method (request-method req)]
-        [url (url->string (request-uri req))])
-    (printf "~a ~a - 200\n" method url)
-    (flush-output)))
-
-(define (输出请求文件 文件)
+(define (输出/请求 文件)
   (let ([mine (匹配MINE (path-get-extension 文件))]
         [body (file->bytes 文件)])
     (response/full 200
@@ -51,11 +45,10 @@
                                   (number->string (bytes-length body)))))
                    (list body))))
 
-(define (未找到日志 req)
+(define (请求信息 req)
   (let ([method (request-method req)]
         [url (url->string (request-uri req))])
-    (printf "~a ~a - 404\n" method url)
-    (flush-output)))
+    (format "~a ~a" method url)))
 
 (define 输出/未找到
   (response/full 404
@@ -66,15 +59,15 @@
                  empty))
 
 (define (请求处理 目录 req)
-  (记录日志/正常 目录)
   (let* ([请求文件 (拼接请求路径 目录 req)]
-         [文件 (检测文件 请求文件)])
+         [文件 (检测文件 请求文件)]
+         [日志 (请求信息 req)])
     (if 文件
         (begin
-          (正常请求日志 req)
-          (输出请求文件 文件))
+          (记录日志/正常 (format "200: ~a" 日志))
+          (输出/请求 文件))
         (begin
-          (未找到日志 req)
+          (记录日志/错误 (format "404: ~a" 日志))
           输出/未找到))))
 
 (define (启动服务 标识)
