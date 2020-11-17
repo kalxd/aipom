@@ -8,36 +8,10 @@
          racket/file
          racket/path
 
-         "./flag.rkt")
+         "./flag.rkt"
+         "./util.rkt")
 
 (provide 启动服务)
-
-(define 扩展映射
-  (make-immutable-hash
-   '(; 前端三剑客
-     (#".html" . #"text/html")
-     (#".css" . #"text/css")
-     (#".js" . #"text/javascript")
-     ; 文字
-     (#".ttf" . #"font/ttf")
-     (#".otf" . #"font/otf")
-     (#".woff" . #"font/woff")
-     ; 图片
-     (#".apng" . #"image/apng")
-     (#".bmp" . #"image/bmp")
-     (#".gif" . #"image/gif")
-     (#".ico" . #"image/x-icon")
-     (#".cur" . #"image/x-icon")
-     (#".jpg" . #"image/jpeg")
-     (#".jpeg" . #"image/jpeg")
-     (#".jfif" . #"image/jpeg")
-     (#".pjpeg" . #"image/jpeg")
-     (#".pjp" . #"image/jpeg")
-     (#".png" . #"image/png")
-     (#".svg" . #"image/svg+xml")
-     (#".tif" . #"image/tiff")
-     (#".tiff" . #"image/tiff")
-     (#".webp" . #"image/webp"))))
 
 ;;; 匹配MIME类型。
 (define (匹配MINE 文件扩展)
@@ -83,7 +57,7 @@
     (printf "~a ~a - 404\n" method url)
     (flush-output)))
 
-(define 输出未找到
+(define 输出/未找到
   (response/full 404
                  #"Not Found"
                  (current-seconds)
@@ -92,6 +66,7 @@
                  empty))
 
 (define (请求处理 目录 req)
+  (记录日志/正常 目录)
   (let* ([请求文件 (拼接请求路径 目录 req)]
          [文件 (检测文件 请求文件)])
     (if 文件
@@ -100,7 +75,7 @@
           (输出请求文件 文件))
         (begin
           (未找到日志 req)
-          输出未找到))))
+          输出/未找到))))
 
 (define (启动服务 标识)
   (let ([端口 (命令标识体-端口 标识)]
