@@ -1,84 +1,80 @@
-#lang racket/base
+#lang azelf
 
 (require web-server/servlet-env
          web-server/http
-         net/url-string
-         racket/list
-         racket/string
-         racket/file
-         racket/path
+         net/url
 
-         "./flag.rkt"
-         "./util.rkt")
+         (only-in racket/port
+                  copy-port)
+         (only-in racket/path
+                  path-get-extension)
+         (only-in racket/list
+                  empty)
 
-(provide 启动服务)
+         "./util.rkt"
+         "./option.rkt"
+         "./mapping.rkt"
+         "./file.rkt")
 
-;;; 匹配MIME类型。
-(define (匹配MINE 文件扩展)
-  (let ([mine (hash-ref 扩展映射 文件扩展 #"text/plain")])
-    (bytes-append mine #"; charset=utf-8")))
+(provide run-server)
 
-;;; 检测文件是否存在，
-;;; 不存在则尝试读取index.html。
-(define (检测文件 文件)
-  (if (file-exists? 文件)
-      文件
-      (let ([索引文件 (build-path 文件 'same "index.html")])
-        (and (file-exists? 索引文件) 索引文件))))
+; 日志输出。
+(define (output/log env error?)
+  (define req (server-env-req env))
+  (define req-url
+    (->> (request-uri req)
+         url->string))
+  (define req-method (request-method req))
+  (define code
+    (if error? 404 200))
+  (define log
+    (format "~a ~a - ~a" req-method req-url code))
+  (displayln log)
+  (flush-output))
 
-(define (拼接请求路径 目录 req)
-  (let* ([uri (request-uri req)]
-         [path (url-path uri)]
-         [path (map path/param-path path)]
-         [path (filter non-empty-string? path)])
-    (apply build-path (cons 目录 path))))
+; 文件存在，正常输出。
+(define (output/file file-path)
+  (define mime-type
+    (->> (path-get-extension file-path)
+         get-file-type
+         (maybe-> #"text/html")
+         (bytes-append it #"; charset=utf8")))
 
-(define (输出/请求 文件)
-  (let ([mine (匹配MINE (path-get-extension 文件))]
-        [body (file->bytes 文件)])
-    (response/full 200
-                   #"OK"
-                   (current-seconds)
-                   mine
-                   (list (header #"Content-Length"
-                                 (string->bytes/utf-8
-                                  (number->string (bytes-length body)))))
-                   (list body))))
+  (response/output
+   (λ (port)
+     (call-with-input-file file-path
+       (λ (file-port)
+         (copy-port file-port port))))
+   #:mime-type mime-type))
 
-(define (请求信息 req)
-  (let ([method (request-method req)]
-        [url (url->string (request-uri req))])
-    (format "~a ~a" method url)))
+; 请求处理。
+(define (handler env)
+  (match (open-file env)
+    [(Just file-path)
+     (begin
+       (output/log env #f)
+       (output/file file-path))]
+    [(Nothing)
+     (begin
+       (output/log env #t)
+       (response/full 404
+                      #"Not Found"
+                      (current-seconds)
+                      TEXT/HTML-MIME-TYPE
+                      empty
+                      empty))]))
 
-(define 输出/未找到
-  (response/full 404
-                 #"Not Found"
-                 (current-seconds)
-                 #"text/html; charset=utf-8"
-                 empty
-                 empty))
-
-(define (请求处理 目录 req)
-  (let* ([请求文件 (拼接请求路径 目录 req)]
-         [文件 (检测文件 请求文件)]
-         [日志 (请求信息 req)])
-    (if 文件
-        (begin
-          (记录日志/正常 (format "200: ~a" 日志))
-          (输出/请求 文件))
-        (begin
-          (记录日志/错误 (format "404: ~a" 日志))
-          输出/未找到))))
-
-(define (启动服务 标识)
-  (let ([端口 (命令标识体-端口 标识)]
-        [目录 (命令标识体-目录 标识)]
-        [地址 (命令标识体-地址 标识)])
-    (serve/servlet (λ (req) (请求处理 目录 req))
-                   #:port 端口
-                   #:listen-ip 地址
+; 启动服务。
+; 服务入口。
+(define (run-server option)
+  (let ([dir (option-working-dir option)]
+        [port (option-bind-port option)]
+        [addr (option-bind-addr option)])
+    (serve/servlet (<-< handler (server-env it dir))
+                   #:port port
+                   #:listen-ip addr
                    #:launch-browser? #f
                    #:servlet-regexp #rx"")))
 
 (module+ test
-  (启动服务 (生成默认标识)))
+  (run-server default-option))
