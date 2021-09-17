@@ -28,4 +28,4 @@
     (set-option-bind-addr! default-option ip)]
 
    #:args()
-   (displayln default-option)))
+   (run-server default-option)))

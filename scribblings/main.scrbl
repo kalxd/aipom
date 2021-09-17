@@ -1,5 +1,5 @@
 #lang scribble/manual
-@require[@for-label[Aipom
+@require[@for-label[aipom
                     racket/base]]
 
 @title{Aipom}
